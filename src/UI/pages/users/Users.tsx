@@ -4,11 +4,11 @@ import {getUsers, User} from "../../../services/userService.ts";
 
 export function Users(){
     const result = useQuery<Array<User>,AxiosError>(['users'],()=>getUsers(),{retry:0})
+    let content =<></>;
     if(result.isLoading){
-        return <progress className="progress is-small is-primary is-striped" max="100" ></progress>;
-    }
-    if(result.isError || result.isRefetchError || result.isLoadingError){
-        return (
+        content =  <progress className="progress is-small is-primary" max="100" ></progress>;
+    }else     if(result.isError || result.isRefetchError || result.isLoadingError){
+        content =  (
             <div className="notification is-danger">
                 {/*<button className="delete"></button>*/}
                 could not load data.
@@ -16,9 +16,10 @@ export function Users(){
                 {result.error.message}
             </div>
         );
-    }
-    return <>
-        users
+    }else{
+
+    content =  <>
+        <span >users</span>
         <table className="table is-fullwidth is-striped is-hoverable is-bordered">
             <thead>
             <tr>
@@ -53,4 +54,9 @@ export function Users(){
             </tbody>
         </table>
     </>
+    }
+
+    return <section id='users'>
+        {content}
+    </section>
 }
