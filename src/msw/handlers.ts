@@ -2,7 +2,7 @@ import {delay, http, HttpResponse} from "msw";
 import { faker } from '@faker-js/faker';
 export const handlers = [
     http.get(
-        '/users/:id',
+        '/api/users/:id',
         async ({ request, params }) => {
             console.info('received request', request.url,'id:', params['id'])
             faker.seed(parseInt(params['id'] as string))
@@ -16,7 +16,7 @@ export const handlers = [
             });
         }),
     http.get(
-        '/users/',
+        '/api/users/',
         async ({ request }) => {
             await delay(2*500);
             console.info('received request', request.url,)
