@@ -1,7 +1,7 @@
 import {useQuery} from "react-query";
 import {AxiosError} from "axios";
 import {getUsers, User} from "../../../services/userService.ts";
-
+import '../../../App.scss';
 export function Users(){
     const result = useQuery<Array<User>,AxiosError>(['users'],()=>getUsers(),{retry:0})
     let content =<></>;

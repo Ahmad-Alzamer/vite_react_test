@@ -3,31 +3,34 @@ import { defineConfig } from "cypress";
 import createBundler from "@bahmutov/cypress-esbuild-preprocessor";
 import { addCucumberPreprocessorPlugin } from "@badeball/cypress-cucumber-preprocessor";
 import { createEsbuildPlugin } from "@badeball/cypress-cucumber-preprocessor/esbuild";
-
+// cypress/support/e2e.js
+// import '@cypress/code-coverage/support';
 export default defineConfig({
   e2e: {
-    specPattern: ["**/*.feature","**/*.cy.ts"],
+    specPattern: ["**/*.feature", "**/*.cy.ts"],
     baseUrl: "http://localhost:5173/",
+
     async setupNodeEvents(on, config) {
       // implement node event listeners here
       // on("file:preprocessor", vitePreprocessor());
-      await addCucumberPreprocessorPlugin(on,config);
+      // require('@cypress/code-coverage/task')(on, config);
+      await addCucumberPreprocessorPlugin(on, config);
 
       on(
-          "file:preprocessor",
-          createBundler({
-            plugins: [createEsbuildPlugin(config)],
-          })
+        "file:preprocessor",
+        createBundler({
+          plugins: [createEsbuildPlugin(config)],
+        })
       );
       return config;
+    },
+  },
+
+  component: {
+    devServer: {
+      framework: "react",
+      bundler: "vite",
 
     },
   },
-  //
-  // component: {
-  //   devServer: {
-  //     framework: "react",
-  //     bundler: "vite",
-  //   },
-  // },
 });

@@ -1,6 +1,3 @@
-import {worker} from '../../src/msw/browser';
-import {delay, http, HttpResponse} from "msw";
-import {faker} from "@faker-js/faker";
 describe('Users', () => {
   beforeEach(() => {
     cy.viewport(1500, 900);
