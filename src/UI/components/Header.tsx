@@ -4,14 +4,20 @@ import {Link, useLocation} from "react-router-dom";
 interface  HeaderProps{
     title?:string,
     subTitle?:string,
+    links?: Array<string>,
+    tabs?: Array<string>,
+    themeColor: 'is-primary' | 'is-dark' | 'is-danger' | 'is-warning' |'is-link' | 'is-info' | 'is-success' | 'is-text'
 }
-function Header(props:HeaderProps) {
+function Header({
+                    title,
+                    subTitle,
+                    tabs= ['Users','Modifiers','Grid','Elements','Components','Layout'],
+                    links = ['Home','Examples','Documentation','Download'],
+                    themeColor = 'is-link'
+}:HeaderProps) {
     const location = useLocation();
     const [burgerMenuIsOpen,setBurgerMenuIsOpen] = useState(false);
     const [activeLink,setActiveLink] = useState('');
-
-    const links = ['Home','Examples','Documentation','Download'];
-    const tabs=['Users','Modifiers','Grid','Elements','Components','Layout'];
 
     const linksItems = links.map((link) =>{
         return (
@@ -33,16 +39,11 @@ function Header(props:HeaderProps) {
     })
 
 
-    // let blocker = useBlocker(
-    //     ({ currentLocation, nextLocation }) =>
-    //         currentLocation.pathname !== nextLocation.pathname
-    // );
-
     return (
         <>
-            <section className="hero is-primary is-medium">
+            <section className={`hero ${themeColor} is-medium`}>
                 <div className="hero-head">
-                    <nav className="navbar">
+                    <nav className="navbar" title='navgiation'>
                         <div className="container">
                             <div className="navbar-brand">
                                 <a className="navbar-item">
@@ -66,10 +67,10 @@ function Header(props:HeaderProps) {
                 <div className="hero-body">
                     <div className="container has-text-centered">
                         <p className="title">
-                            {props.title?? "Title"}
+                            {title?? "Title"}
                         </p>
                         <p className="subtitle">
-                            {props.subTitle?? "Subtitle"}
+                            {subTitle?? "Subtitle"}
                         </p>
                     </div>
                 </div>
@@ -84,17 +85,7 @@ function Header(props:HeaderProps) {
                     </nav>
                 </div>
             </section>
-            {/*{blocker.state === "blocked" ? (*/}
-            {/*    <div>*/}
-            {/*        <p>Are you sure you want to leave?</p>*/}
-            {/*        <button onClick={() => blocker.proceed!()}>*/}
-            {/*            Proceed*/}
-            {/*        </button>*/}
-            {/*        <button onClick={() => blocker.reset!()}>*/}
-            {/*            Cancel*/}
-            {/*        </button>*/}
-            {/*    </div>*/}
-            {/*) : null}*/}
+
         </>
     )
 }
