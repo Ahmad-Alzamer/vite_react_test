@@ -218,9 +218,9 @@ export function NewUser(){
                 <br/>
                 <br/>
                 <br/>
-                <button className="button is-primary is-fullwidth" type="submit" >Submit</button>
+                <button className="button is-info is-fullwidth" type="submit" >Submit</button>
                 <br/>
-                <button className="button is-primary is-outlined is-fullwidth" type="reset" onClick={()=>reset()} >Reset</button>
+                <button className="button is-info is-outlined is-fullwidth" type="reset" onClick={()=>reset()} >Reset</button>
             </form>
         </section>
     )
