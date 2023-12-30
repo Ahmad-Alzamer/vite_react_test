@@ -3,7 +3,7 @@ import {AxiosError} from "axios";
 import {getUsers, User} from "../../../services/userService.ts";
 import '../../../App.scss';
 export function Users(){
-    const result = useQuery<Array<User>,AxiosError>(['users'],()=>getUsers(),{retry:0})
+    const result = useQuery<Array<User>,AxiosError>(['users'],()=>getUsers(),{retry:0, staleTime: 1000*60*10})
     let content =<></>;
     if(result.isLoading){
         content =  <progress className="progress is-small is-primary" max="100" ></progress>;
