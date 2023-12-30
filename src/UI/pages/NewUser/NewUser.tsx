@@ -149,7 +149,7 @@ export function NewUser(){
                         return value && (value as FileList).length<=(curr.max??Number.MAX_VALUE);});
                     case "FILE-TYPE": return prev.test('fileType',curr.message??'the file type is not supported', (value?:any) => {console.info('file type',field.name,(value as FileList),(value as FileList).length);  return  (value as FileList)?.length<1 || Array.from(value as FileList).every(file => curr.supportedFileTypes.has(file.type) );});
                     default: {
-                        console.warn('provided validation type is not supported for File input', curr.type)
+                        console.warn('provided validation type is not supported for File input:', curr.type)
                         return prev;
                     }
                 }
@@ -160,7 +160,7 @@ export function NewUser(){
                     case "MAX": return prev.min(curr.max??0,curr.message);
                     case "PATTERN": return prev.matches(curr.pattern ?? /.*/, curr.message);
                     default:{
-                        console.warn('provided validation type is not supported for File input', curr.type)
+                        console.warn('provided validation type is not supported for generic input:', curr.type)
                         return prev;
                     }
                 }
