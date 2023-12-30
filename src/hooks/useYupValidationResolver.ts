@@ -3,7 +3,6 @@ import * as yup from "yup";
 export const useYupValidationResolver = (validationSchema: yup.ObjectSchema) =>
     useCallback(
         async (data:any) => {
-            console.info('inside callback', data)
             try {
                 const values = await validationSchema.validate(data, {
                     abortEarly: false,
@@ -16,7 +15,7 @@ export const useYupValidationResolver = (validationSchema: yup.ObjectSchema) =>
                     errors: {},
                 }
             } catch (errors: yup.ValidationError) {
-                const result= {
+                return {
                     values: {},
                     errors: errors.inner.reduce(
                         (accumulator: any, current: any) => {
@@ -37,8 +36,6 @@ export const useYupValidationResolver = (validationSchema: yup.ObjectSchema) =>
                         {}
                     ),
                 }
-                console.error('inside callback catch',result)
-                return result;
             }
         },
         [validationSchema]

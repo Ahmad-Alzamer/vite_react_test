@@ -107,7 +107,7 @@ const formDef={
         {
             name:'password',
             label: 'Password',
-            type: 'text',
+            type: 'password',
             validations:[
                 {
                     type: 'MAX',
@@ -155,7 +155,7 @@ export function NewUser(){
                 }
             }else{
                 switch (curr.type){
-                    case "REQUIRED": return prev.required(curr.message);
+                    case "REQUIRED": return field.type==='select'? prev.test('required',curr.message??'please select a value', (value)=> value!=='placeholder') : prev.required(curr.message);
                     case "MIN": return prev.min(curr.min??0,curr.message);
                     case "MAX": return prev.min(curr.max??0,curr.message);
                     case "PATTERN": return prev.matches(curr.pattern ?? /.*/, curr.message);
@@ -187,9 +187,12 @@ export function NewUser(){
         getValues
     } = useForm({resolver})
 
-    const onSubmit: SubmitHandler = (data) => console.log('handling form submission',data)
+    const onSubmit: SubmitHandler = (data) => {
+        reset();
+        console.log('handling form submission',data)
+    }
 
-    console.log('NewUser','formState',formState,watch('profilePicture')) // watch input value by passing the name of it
+    // console.log('NewUser','formState',formState,watch('profilePicture')) // watch input value by passing the name of it
 
     const renderedFields = formDef.fields.map((field,index)=>{
         if(field.type === 'select'){
@@ -202,12 +205,13 @@ export function NewUser(){
     }
 
     )
+
+    console.log('formState',formState,'gender',watch('gender'))
 //https://react-hook-form.com/advanced-usage#SmartFormComponent
     return (
         <section id='NewUser'>
             New User
             <form onSubmit={handleSubmit(onSubmit)}>
-                {/* register your input into the hook by invoking the "register" function */}
                 {renderedFields}
 
 
@@ -216,7 +220,7 @@ export function NewUser(){
                 <br/>
                 <button className="button is-primary is-fullwidth" type="submit" >Submit</button>
                 <br/>
-                <button className="button is-primary is-outlined is-fullwidth" type="button" onClick={()=>reset()} >Reset</button>
+                <button className="button is-primary is-outlined is-fullwidth" type="reset" onClick={()=>reset()} >Reset</button>
             </form>
         </section>
     )
@@ -231,7 +235,7 @@ function GenericInput({field, index,register,formState}:{field:FieldDef,index: n
             <div className="field-body">
                 <div className="field">
                     <div className="control">
-                        <input {...register(field.name,) } className={`input ${formState.errors.firstName?'is-danger':''}`} type="text" id={field.name+"-"+index} />
+                        <input {...register(field.name,) } className={`input ${formState.errors.firstName?'is-danger':''}`} type={field.type} id={field.name+"-"+index}  autoComplete={field.name} />
                         {formState.errors[field.name] &&  [formState.errors[field.name]?.message].flat().map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
                     </div>
                 </div>
@@ -249,13 +253,10 @@ function SelectInput({field, index,register,formState}:{field:FieldDef,index: nu
             <div className="field-body">
                 <div className="field">
                     <div className="control">
-                        {/*<input {...register("gender")} className="input " type="email" id='gender' />*/}
                         <div  className={`select is-fullwidth ${formState.errors[field.name]?'is-danger':''}`}>
-                            <select {...register(field.name)} id={field.name+index}  >
-                                <option disabled value="" selected>Please Select Gender</option>
+                            <select {...register(field.name)} id={field.name+index} defaultValue='placeholder' >
+                                <option disabled value='placeholder' >Please Select Gender</option>
                                 {field.selectOptions?.map(option => <option value={option.code} key={option.code}>{option.text}</option>)}
-                                {/*<option value="male">Male</option>*/}
-                                {/*<option value="female">Female</option>*/}
                             </select>
                         </div>
                         {formState.errors[field.name] &&  [formState.errors[field.name]?.message].flat().map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
@@ -278,11 +279,9 @@ function FileInput({field, index,register,formState,getValues}:{field:FieldDef,i
                 <div className="control">
                     <div className="file has-name">
                         <label className="file-label">
-                            {/*<input  type="file"  {...register("profilePicture",)} className={`file-input ${formState.errors.profilePicture?'is-danger':''}`} id='profilePicture' />*/}
                             <input  type="file"  {...register(field.name) } className={`file-input  ${formState.errors.firstName?'is-danger':''}`} id={field.name+"-"+index} />
                             <span className="file-cta">
                               <span className="file-icon">
-                                {/*<i className="fas fa-upload"></i>*/}
                                   <FontAwesomeIcon icon={faUpload} />
                               </span>
                               <span className="file-label">

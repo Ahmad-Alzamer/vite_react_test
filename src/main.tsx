@@ -23,16 +23,16 @@ enableMocking().then(()=>{
 
     ReactDOM.createRoot(document.getElementById('root')!).render(
         <React.StrictMode>
-            <Profiler id='root' onRender={
-                (id, phase, actualDuration, baseDuration, startTime, commitTime, interactions) => console.info({
-                    'root profiler':id,
-                    'phase':phase,
-                    'actualDuration':actualDuration,
-                    'baseDuration':baseDuration,
-                    'startTime':startTime,
-                    'commitTime':commitTime,
-                    'interactions':interactions
-                })
+            <Profiler id='root'
+                      onRender={(id, phase, actualDuration, baseDuration, startTime, commitTime, interactions) => console.info({
+                          'root profiler':id,
+                          'phase':phase,
+                          'actualDuration':actualDuration,
+                          'baseDuration':baseDuration,
+                          'startTime':startTime,
+                          'commitTime':commitTime,
+                          'interactions':interactions
+                      })
             }>
                 <QueryClientProvider client={queryClient}>
                     <App/>
