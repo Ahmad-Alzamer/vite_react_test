@@ -94,3 +94,10 @@
 @import "bulma/sass/grid/all";
 @import "bulma/sass/helpers/all";
 @import "bulma/sass/layout/all";
+
+
+abbr{
+  //content: attr(data-title);
+  text-decoration-line: none;
+
+}

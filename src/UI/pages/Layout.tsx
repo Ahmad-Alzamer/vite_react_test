@@ -5,7 +5,7 @@ import {useImmerReducer} from "use-immer";
 import {Outlet} from "react-router-dom";
 import {JSX} from "react";
 import {initialState, reducer, StateContext} from "../../store/store.ts";
-import Header from "../components/Header.tsx";
+import Header from "../components/Header/Header.tsx";
 
 
 function Layout({children}:{children?:JSX.Element|JSX.Element[]}) {
