@@ -4,13 +4,9 @@ export const useValidationResolver = (validationSchema: yup.ObjectSchema) =>
     useCallback(
         async (data:any) => {
             try {
-                console.info('validation',data)
-                const values = await validationSchema.validate(data, {
-                    abortEarly: false,
-                    // recursive:false
-
-                })
-
+                let  values =await validationSchema.validate(data, {
+                        abortEarly: false,
+                    })
                 return {
                     values,
                     errors: {},
@@ -20,14 +16,16 @@ export const useValidationResolver = (validationSchema: yup.ObjectSchema) =>
                     values: {},
                     errors: errors.inner.reduce(
                         (accumulator: any, current: any) => {
+                            console.info('validation error',current.path, current.type, current.message)
                             let value= accumulator[current.path];
                             if(!value){
-                                value ={
-                                    type: current.type ?? "validation",
-                                    message: [] as Array<string>,
-                                }
+                                value =[] as Array<{type: string,message: string,}>
                             }
-                            value.message = value.message.concat(current.message);
+                            const newErrorMessage = {
+                                type: current.type ?? "validation",
+                                message: current.message,
+                            };
+                            value = value.concat(newErrorMessage);
 
                             return {
                                 ...accumulator,

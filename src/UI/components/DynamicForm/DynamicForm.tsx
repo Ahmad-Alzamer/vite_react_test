@@ -1,12 +1,11 @@
 import * as yup from "yup";
 import {useValidationResolver} from "../../../hooks/useValidationResolver.ts";
-import { SubmitHandler, useController, useForm} from "react-hook-form";
-import {Control, FormState, UseFormGetValues, UseFormRegister} from "react-hook-form/dist/types/form";
+import {FormProvider, SubmitHandler,  useForm, useFormContext} from "react-hook-form";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faUpload} from "@fortawesome/free-solid-svg-icons";
 import {FieldDef, FormDef, PageDef} from "./types.ts";
-import React, {useEffect, useRef, useState} from "react";
-import useFormNavigation, {UseFormNavigationResult} from "../../../hooks/useFormNavigation.ts";
+import React, {useEffect,  useState} from "react";
+import useFormNavigation  from "../../../hooks/useFormNavigation.ts";
 
 
 export function DynamicForm({formDef}:{formDef: FormDef}) : React.JSX.Element{
@@ -15,104 +14,96 @@ export function DynamicForm({formDef}:{formDef: FormDef}) : React.JSX.Element{
     const currentPageDef =  formDef.pages
         .find(page => page.id === formNavigation.currentPage);
 
-    const [formData, setFormData] = useState({} as {[pageId: string]:{} } );
+    const validationSchema = transformPageDefToValidationSchema(currentPageDef ?? {} as any);
+    const resolver = useValidationResolver(validationSchema);
 
 
+    const useFormMethods = useForm({resolver })
 
-    function _setFormData(formData: any) {
-        setFormData(formData)
+    console.info('firstName',useFormMethods.watch('firstName'))
+
+    const onSubmit: SubmitHandler<any> = (data) => {
+        console.log('handling page submission for page:',currentPageDef?.id,'current page data',data);
+        if(formNavigation.hasNext){
+            formNavigation.nextPage();
+            // useFormMethods.reset(data);
+        }else{
+            console.info('last page submitted');
+            useFormMethods.reset()
+            formNavigation.firstPage();
+        }
     }
-    function _setPageData(formData: any, pageId: string) {
-        setFormData((prev: any) =>({...prev,[pageId]:formData}))
+    const onReset = () => {
+        useFormMethods.reset();
+        formNavigation.firstPage();
     }
+    async function previousPage(){
+        formNavigation.previousPage();
+        await useFormMethods.trigger();
+
+    }
+
 
     return (
         <section id={formDef.id.name}>
-            <div className='is-flex is-justify-content-center'><span className='is-capitalized'>{formDef.header}</span></div>
-            <hr/>
-            {currentPageDef && <FormPage pageDef={currentPageDef} formNav={formNavigation} key={currentPageDef.id} setFormData={_setFormData} setPageData={_setPageData} pageData={formData[currentPageDef.id]??({} as any)}/> }
+            <FormProvider {...useFormMethods}>
+                <form onSubmit={useFormMethods.handleSubmit(onSubmit)} >
+                    <div className='is-flex is-justify-content-center'><span className='is-capitalized'>{formDef.header}</span></div>
+                    <hr/>
+                    {currentPageDef && <FormPage pageDef={currentPageDef} /> }
+
+
+                    <br/>
+                    <br/>
+                    <br/>
+                    <div className='is-flex is-justify-content-center '>
+                        <button className="button is-info is-outlined mx-3 " type="reset" onClick={onReset} >Reset</button>
+                        {formNavigation.hasPrevious && <button className="button is-info mx-3" type="button"  onClick={previousPage} >Previous</button>}
+                        <button className="button is-info mx-3" type="submit" >{formNavigation.hasNext? 'Next': 'Submit'}</button>
+                    </div>
+
+                    <br/>
+                </form>
+            </FormProvider>
+
+
         </section>
     )
 }
 
-function FormPage({pageDef,formNav, setPageData,setFormData, pageData}:{pageDef: PageDef,formNav: UseFormNavigationResult, setPageData: (formData :any, pageId:string)=> void, setFormData: (formData :any)=> void, pageData:any}) : React.JSX.Element{
-
-    const validationSchema = transformPageDefToValidationSchema(pageDef);
-
-    const resolver = useValidationResolver(validationSchema);
-    const {
-        register,
-        handleSubmit,
-        formState,
-        reset,
-        getValues,
-        control,
-        watch
-    } = useForm({resolver, values:pageData })
-
-    console.info('firstName',watch('firstName'))
-
-    const onSubmit: SubmitHandler<any> = (data) => {
-        // reset();
-        console.log('handling page submission for page:',pageDef.id,'current page data',data);
-        setPageData(data,pageDef.id);
-        if(formNav.hasNext){
-            // setCurrentPage(formDef.pages[currentPageIndex+1].id);
-            formNav.nextPage();
-        }else{
-            console.info('last page submitted');
-            // reset()
-            // setCurrentPage(formDef.pages[0].id)
-            formNav.firstPage();
-        }
-    }
-    const onReset = () => {
-        reset()
-        // setCurrentPage(formDef.pages[0].id)
-        formNav.firstPage();
-        setFormData({});
-    }
-
-    // console.log('NewUser','formState',formState,watch('profilePicture')) // watch input value by passing the name of it
-
+function FormPage({pageDef}:{pageDef: PageDef}) : React.JSX.Element{
     const renderedFields = pageDef.fields.map((field,index)=>{
             if(field.type === 'select'){
-                return <SelectInput field={field} index={index} formState={formState} register={register} key={field.name+"-"+index} control={control}/>;
+                return <SelectInput field={field} index={index}  key={field.name+"-"+index} />;
             }else if(field.type === 'file'){
-                return <FileInput field={field} index={index} formState={formState} register={register} key={field.name+"-"+index} getValues={getValues} control={control}/>;
+                return <FileInput field={field} index={index}  key={field.name+"-"+index} />;
             }else{
-                return <GenericInput control={control} field={field} index={index} formState={formState} register={register} key={field.name+"-"+index} fieldData={pageData[field.name]}/>;
+                return <GenericInput field={field} index={index} key={field.name+"-"+index} />;
             }
         }
 
     )
 
+
+    //https://codesandbox.io/p/sandbox/practical-kirch-pd9s3l?file=%2Fsrc%2FMultiStepForm.js%3A97%2C7
+
+
     return (
         <>
             <div className='is-flex is-justify-content-center'><span className='is-capitalized'>{pageDef.header}</span></div>
             <hr/>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                {renderedFields}
+
+            {renderedFields}
 
 
-                <br/>
-                <br/>
-                <br/>
-                <div className='is-flex is-justify-content-center '>
-                    <button className="button is-info is-outlined mx-3 " type="reset" onClick={onReset} >Reset</button>
-                    {formNav.hasPrevious && <button className="button is-info mx-3" type="button" onClick={formNav.previousPage}  >Previous</button>}
-                    <button className="button is-info mx-3" type="submit" >{formNav.hasNext? 'Next': 'Submit'}</button>
-                </div>
-
-                <br/>
-
-            </form>
         </>
     )
 }
 
 
-function GenericInput({field,index,formState, control, register}:{field:FieldDef,index: number, register: UseFormRegister, formState: FormState, control: Control, fieldData: any}): React.JSX.Element{
+
+
+function GenericInput({field,index}:{field:FieldDef,index: number}): React.JSX.Element{
     // const fieldController = useController({
     //     name:field.name,
     //     control,
@@ -145,7 +136,7 @@ function GenericInput({field,index,formState, control, register}:{field:FieldDef
     //         </div>
     //     </div>
     // );
-
+    const {formState,register} = useFormContext();
     return (
         <div className="field is-horizontal" >
             <div className="field-label is-normal">
@@ -155,7 +146,7 @@ function GenericInput({field,index,formState, control, register}:{field:FieldDef
                 <div className="field">
                     <div className="control">
                         <input {...register(field.name,) } className={`input ${formState.errors[field.name]?'is-danger':''}`} type={field.type} id={field.name+"-"+index}  autoComplete={field.name} />
-                        {formState.errors[field.name] &&  [formState.errors[field.name]?.message].flat().map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
+                        {formState.errors[field.name] &&  [formState.errors[field.name]].flat().map(error => error?.message).map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
                     </div>
                 </div>
             </div>
@@ -163,7 +154,7 @@ function GenericInput({field,index,formState, control, register}:{field:FieldDef
     );
 }
 
-function SelectInput({field,index,formState,register, control}:{field:FieldDef,index: number, register: UseFormRegister, formState: FormState, control: Control}): React.JSX.Element {
+function SelectInput({field,index,}:{field:FieldDef,index: number}): React.JSX.Element {
     // const placeholder='placeholder';
     // const fieldController = useController({
     //     name:field.name,
@@ -200,7 +191,7 @@ function SelectInput({field,index,formState,register, control}:{field:FieldDef,i
     //         </div>
     //     </div>
     // )
-
+    const {formState,register} = useFormContext();
     return (
         <div className="field is-horizontal">
             <div className="field-label is-normal">
@@ -215,7 +206,7 @@ function SelectInput({field,index,formState,register, control}:{field:FieldDef,i
                                 {field.selectOptions?.map(option => <option value={option.code} key={option.code}>{option.text}</option>)}
                             </select>
                         </div>
-                        {formState.errors[field.name] &&  [formState.errors[field.name]?.message].flat().map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
+                        {formState.errors[field.name] &&  [formState.errors[field.name]].flat().map(error => error?.message).map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
                     </div>
                 </div>
             </div>
@@ -224,7 +215,7 @@ function SelectInput({field,index,formState,register, control}:{field:FieldDef,i
 }
 
 
-function FileInput({field,index,formState, register, control,getValues}:{field:FieldDef,index: number, register: UseFormRegister, formState: FormState, control: Control,getValues:UseFormGetValues}): React.JSX.Element{
+function FileInput({field,index}:{field:FieldDef,index: number,}): React.JSX.Element{
     // const fieldController = useController({
     //     name:field.name,
     //     control,
@@ -269,8 +260,11 @@ function FileInput({field,index,formState, register, control,getValues}:{field:F
     //
     //     </div>
     // );
-
+    const {formState,register,getValues} = useFormContext();
     const [selectedFiles, setSelectedFiles] = useState<FileList|null>(null)
+    useEffect(()=>{
+        setSelectedFiles(getValues(field.name));
+    },[])
     function _onChange(event :React.ChangeEvent<HTMLInputElement>){
         setSelectedFiles(event.target.files);
     }
@@ -302,11 +296,12 @@ function FileInput({field,index,formState, register, control,getValues}:{field:F
                                     Choose a file…
                                   </span>
                                 </span>
+                                {/*{Array.from(selectedFiles??[]).map(file => <abbr className="file-name" title={file.name} key={file.name} >{file.name}</abbr>)}*/}
                                 {Array.from(selectedFiles??[]).map(file => <abbr className="file-name" title={file.name} key={file.name} >{file.name}</abbr>)}
 
                             </label>
                         </div>
-                        {formState.errors[field.name] &&  [formState.errors[field.name]?.message].flat().map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
+                        {formState.errors[field.name] &&  [formState.errors[field.name]].flat().map(error => error?.message).map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
 
 
                     </div>
