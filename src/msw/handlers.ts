@@ -1,5 +1,6 @@
 import {delay, http, HttpResponse} from "msw";
 import { faker } from '@faker-js/faker';
+import { v4 as uuidv4 } from 'uuid';
 export const handlers = [
     http.get(
         '/api/users/:id',
@@ -31,5 +32,26 @@ export const handlers = [
                 }
             })
             return HttpResponse.json(seeds, { status: 200 });
+        }),
+    http.post(
+        '/uploadDocument',
+        async ({ request }) => {
+            await delay(2*500);
+            console.info('received document upload request', request.url,)
+
+            return HttpResponse.json({
+                uploadStatus:'success',
+                documentId: uuidv4()
+            }, { status: 201 });
+        }),
+    http.post(
+        '/submitForm',
+        async ({ request }) => {
+            await delay(2*500);
+            console.info('received form submission request', request.url,)
+
+            return HttpResponse.json({
+                status:'success'
+            }, { status: 201 });
         })
 ]

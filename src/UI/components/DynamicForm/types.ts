@@ -3,9 +3,12 @@ export type FormValidations = 'REQUIRED' | 'MIN' | 'MAX' | 'PATTERN' | 'FILE-TYP
 export interface FieldDef{
     name: string,
     label: string,
-    type : 'text' | 'select' | 'file',
+    type : 'text' | 'select' | 'file' | 'file-table-input',
+    placeHolder?: string,
     selectOptions? : Array<{code: string, text: string}>,
-    validations: Array<{type: FormValidations, message?: string, supportedFileTypes: Set<string>, min?: number, max?: number, pattern?: RegExp}>
+    sourceFilesInputName?: string,
+    fileTableInput?: FieldDef,
+    validations: Array<{type: FormValidations, message?: string, supportedFileTypes?: Set<string>, min?: number, max?: number, pattern?: RegExp}>
 }
 
 export interface FormDef{

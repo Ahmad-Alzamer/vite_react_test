@@ -11,12 +11,12 @@ export const useValidationResolver = (validationSchema: yup.ObjectSchema) =>
                     values,
                     errors: {},
                 }
-            } catch (errors: yup.ValidationError) {
+            } catch (_errors) {
+                const errors = _errors as yup.ValidationError;
                 return {
                     values: {},
                     errors: errors.inner.reduce(
                         (accumulator: any, current: any) => {
-                            console.info('validation error',current.path, current.type, current.message)
                             let value= accumulator[current.path];
                             if(!value){
                                 value =[] as Array<{type: string,message: string,}>

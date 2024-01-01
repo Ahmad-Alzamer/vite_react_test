@@ -1,38 +1,46 @@
-import * as yup from "yup";
 import {useValidationResolver} from "../../../hooks/useValidationResolver.ts";
-import {FormProvider, SubmitHandler,  useForm, useFormContext} from "react-hook-form";
+import {FormProvider, SubmitHandler, useFieldArray, useForm, useFormContext} from "react-hook-form";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faUpload} from "@fortawesome/free-solid-svg-icons";
 import {FieldDef, FormDef, PageDef} from "./types.ts";
 import React, {useEffect,  useState} from "react";
 import useFormNavigation  from "../../../hooks/useFormNavigation.ts";
+import {transformPageDefToValidationSchema} from "../../../services/pageDefToValidationSchema.ts";
+import {documentUpload} from "../../../services/documentUpload.ts";
+import {submitForm} from "../../../services/submitForm.ts";
 
 
 export function DynamicForm({formDef}:{formDef: FormDef}) : React.JSX.Element{
+    const [uploadedDocumentIds, setUploadedDocumentIds] = useState<{[fileName:string]:string}>({});
     const formNavigation = useFormNavigation(formDef);
 
     const currentPageDef =  formDef.pages
         .find(page => page.id === formNavigation.currentPage);
 
-    const validationSchema = transformPageDefToValidationSchema(currentPageDef ?? {} as any);
+    const validationSchema = transformPageDefToValidationSchema(currentPageDef?.fields ?? []);
     const resolver = useValidationResolver(validationSchema);
 
 
     const useFormMethods = useForm({resolver })
 
-    console.info('firstName',useFormMethods.watch('firstName'))
+    // console.info('firstName',useFormMethods.watch('firstName'))
 
-    const onSubmit: SubmitHandler<any> = (data) => {
-        console.log('handling page submission for page:',currentPageDef?.id,'current page data',data);
-        if(formNavigation.hasNext){
-            formNavigation.nextPage();
-            // useFormMethods.reset(data);
-        }else{
-            console.info('last page submitted');
-            useFormMethods.reset()
-            formNavigation.firstPage();
-        }
+    const onPageSubmit: SubmitHandler<any> = (data) => {
+        console.log('handling page submission for page:',currentPageDef?.id,'collected data so far',data);
+        formNavigation.nextPage();
+
     }
+
+    const onFormSubmit: SubmitHandler<any> =async  (data) => {
+        console.log('handling last page submission for form:',formDef.id.name,'form data',data);
+        const result = await submitForm(data,formDef,uploadedDocumentIds);
+        console.info('form submission result',result)
+        // useFormMethods.reset()
+        // formNavigation.firstPage();
+        // setUploadedDocumentIds({});
+    }
+
+
     const onReset = () => {
         useFormMethods.reset();
         formNavigation.firstPage();
@@ -46,11 +54,11 @@ export function DynamicForm({formDef}:{formDef: FormDef}) : React.JSX.Element{
 
     return (
         <section id={formDef.id.name}>
-            <FormProvider {...useFormMethods}>
-                <form onSubmit={useFormMethods.handleSubmit(onSubmit)} >
+            <FormProvider {...useFormMethods} >
+                <form >
                     <div className='is-flex is-justify-content-center'><span className='is-capitalized'>{formDef.header}</span></div>
                     <hr/>
-                    {currentPageDef && <FormPage pageDef={currentPageDef} /> }
+                    {currentPageDef && <FormPage pageDef={currentPageDef} setUploadedDocumentIds={setUploadedDocumentIds} /> }
 
 
                     <br/>
@@ -59,7 +67,8 @@ export function DynamicForm({formDef}:{formDef: FormDef}) : React.JSX.Element{
                     <div className='is-flex is-justify-content-center '>
                         <button className="button is-info is-outlined mx-3 " type="reset" onClick={onReset} >Reset</button>
                         {formNavigation.hasPrevious && <button className="button is-info mx-3" type="button"  onClick={previousPage} >Previous</button>}
-                        <button className="button is-info mx-3" type="submit" >{formNavigation.hasNext? 'Next': 'Submit'}</button>
+                        {formNavigation.hasNext && <button className="button is-info mx-3" type="submit"  onClick={useFormMethods.handleSubmit(onPageSubmit)}>Next</button>}
+                        {!formNavigation.hasNext && <button className="button is-info mx-3" type="submit"  onClick={useFormMethods.handleSubmit(onFormSubmit)}>Submit</button>}
                     </div>
 
                     <br/>
@@ -71,18 +80,9 @@ export function DynamicForm({formDef}:{formDef: FormDef}) : React.JSX.Element{
     )
 }
 
-function FormPage({pageDef}:{pageDef: PageDef}) : React.JSX.Element{
-    const renderedFields = pageDef.fields.map((field,index)=>{
-            if(field.type === 'select'){
-                return <SelectInput field={field} index={index}  key={field.name+"-"+index} />;
-            }else if(field.type === 'file'){
-                return <FileInput field={field} index={index}  key={field.name+"-"+index} />;
-            }else{
-                return <GenericInput field={field} index={index} key={field.name+"-"+index} />;
-            }
-        }
-
-    )
+function FormPage({pageDef,setUploadedDocumentIds}:{pageDef: PageDef, setUploadedDocumentIds: (input : {[fileName:string]:string})=> void }) : React.JSX.Element{
+    const renderedFields = pageDef.fields
+        .map((field,index)=><Input field={field} index={index}  key={field.name+"-"+index} setUploadedDocumentIds={setUploadedDocumentIds} />)
 
 
     //https://codesandbox.io/p/sandbox/practical-kirch-pd9s3l?file=%2Fsrc%2FMultiStepForm.js%3A97%2C7
@@ -90,7 +90,9 @@ function FormPage({pageDef}:{pageDef: PageDef}) : React.JSX.Element{
 
     return (
         <>
-            <div className='is-flex is-justify-content-center'><span className='is-capitalized'>{pageDef.header}</span></div>
+            <div className='is-flex is-justify-content-center'>
+                <span className='is-capitalized'>{pageDef.header}</span>
+            </div>
             <hr/>
 
             {renderedFields}
@@ -99,11 +101,21 @@ function FormPage({pageDef}:{pageDef: PageDef}) : React.JSX.Element{
         </>
     )
 }
+function Input({field,index, displayLabel=true,overrideFieldName, overrideErrorMessageName, setUploadedDocumentIds}:{field:FieldDef,index: number, displayLabel?: boolean, overrideFieldName?: string, overrideErrorMessageName?: string, setUploadedDocumentIds?: (input : {[fileName:string]:string})=> void}): React.JSX.Element{
+    if(field.type === 'select'){
+        return <SelectInput field={field} index={index}  key={field.name+"-"+index} displayLabel={displayLabel} overrideFieldName={overrideFieldName} overrideErrorMessageName={overrideErrorMessageName}/>;
+    }else if(field.type === 'file'){
+        return <FileInput field={field} index={index}  key={field.name+"-"+index} displayLabel={displayLabel} overrideFieldName={overrideFieldName} overrideErrorMessageName={overrideErrorMessageName} setUploadedDocumentIds={setUploadedDocumentIds}/>;
+    }else if(field.type === 'file-table-input'){
+        return <FileTableInput field={field} index={index}  key={field.name+"-"+index} displayLabel={displayLabel}/>;
+    }else{
+        return <GenericInput field={field} index={index} key={field.name+"-"+index} displayLabel={displayLabel} overrideFieldName={overrideFieldName} overrideErrorMessageName={overrideErrorMessageName}/>;
+    }
+}
 
 
 
-
-function GenericInput({field,index}:{field:FieldDef,index: number}): React.JSX.Element{
+function GenericInput({field,index,overrideFieldName,overrideErrorMessageName,displayLabel=true}:{field:FieldDef,index: number, displayLabel: boolean, overrideFieldName?: string, overrideErrorMessageName?: string}): React.JSX.Element{
     // const fieldController = useController({
     //     name:field.name,
     //     control,
@@ -139,14 +151,16 @@ function GenericInput({field,index}:{field:FieldDef,index: number}): React.JSX.E
     const {formState,register} = useFormContext();
     return (
         <div className="field is-horizontal" >
-            <div className="field-label is-normal">
-                <label className="label" htmlFor={field.name}>{field.label}</label>
-            </div>
+            {displayLabel && (
+                <div className="field-label is-normal">
+                    <label className="label is-capitalized" htmlFor={field.name}>{field.label}</label>
+                </div>
+            )}
             <div className="field-body">
                 <div className="field">
                     <div className="control">
-                        <input {...register(field.name,) } className={`input ${formState.errors[field.name]?'is-danger':''}`} type={field.type} id={field.name+"-"+index}  autoComplete={field.name} />
-                        {formState.errors[field.name] &&  [formState.errors[field.name]].flat().map(error => error?.message).map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
+                        <input {...register(overrideFieldName??field.name,) } className={`input ${formState.errors[field.name]?'is-danger':''}`} type={field.type} id={field.name+"-"+index}  autoComplete={field.name} />
+                        {formState.errors[overrideErrorMessageName??field.name] &&  [formState.errors[overrideErrorMessageName??field.name]].flat().map(error => error?.message).map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
                     </div>
                 </div>
             </div>
@@ -154,7 +168,7 @@ function GenericInput({field,index}:{field:FieldDef,index: number}): React.JSX.E
     );
 }
 
-function SelectInput({field,index,}:{field:FieldDef,index: number}): React.JSX.Element {
+function SelectInput({field,index,overrideFieldName,overrideErrorMessageName,displayLabel=true}:{field:FieldDef,index: number, displayLabel: boolean, overrideFieldName?: string, overrideErrorMessageName?: string}): React.JSX.Element {
     // const placeholder='placeholder';
     // const fieldController = useController({
     //     name:field.name,
@@ -194,19 +208,21 @@ function SelectInput({field,index,}:{field:FieldDef,index: number}): React.JSX.E
     const {formState,register} = useFormContext();
     return (
         <div className="field is-horizontal">
-            <div className="field-label is-normal">
-                <label className="label" htmlFor={field.name}>{field.label}</label>
-            </div>
+            {displayLabel && (
+                <div className="field-label is-normal">
+                    <label className="label is-capitalized" htmlFor={field.name}>{field.label}</label>
+                </div>
+            )}
             <div className="field-body">
                 <div className="field">
                     <div className="control">
                         <div  className={`select is-fullwidth ${formState.errors[field.name]?'is-danger':''}`}>
-                            <select {...register(field.name)} id={field.name+index} defaultValue='placeholder' >
-                                <option disabled value='placeholder' >Please Select Gender</option>
+                            <select {...register(overrideFieldName??field.name)} id={field.name+index} defaultValue='placeholder'  className='is-capitalized'>
+                                <option disabled value='placeholder'  >{field.placeHolder?? 'Please Select Value'}</option>
                                 {field.selectOptions?.map(option => <option value={option.code} key={option.code}>{option.text}</option>)}
                             </select>
                         </div>
-                        {formState.errors[field.name] &&  [formState.errors[field.name]].flat().map(error => error?.message).map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
+                        {formState.errors[overrideErrorMessageName??field.name] &&  [formState.errors[overrideErrorMessageName??field.name]].flat().map(error => error?.message).map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
                     </div>
                 </div>
             </div>
@@ -215,7 +231,50 @@ function SelectInput({field,index,}:{field:FieldDef,index: number}): React.JSX.E
 }
 
 
-function FileInput({field,index}:{field:FieldDef,index: number,}): React.JSX.Element{
+function FileTableInput({field,}:{field:FieldDef,index: number, displayLabel: boolean}): React.JSX.Element {
+    const tableInput = field.fileTableInput;
+
+
+    const { watch} = useFormContext();
+    const { fields,replace } = useFieldArray({
+        name: tableInput?.name?? field.name, // unique name for your Field Array
+
+    });
+    const files = watch(field.sourceFilesInputName??'') as FileList;
+    useEffect(()=>{
+        // replace(Array.from(files).map(file => ({})));
+        replace(new Array(files.length).fill({}));
+
+    },[files]);
+    return (
+        <table className="table is-fullwidth is-striped is-hoverable is-bordered">
+            <thead>
+            <tr>
+                <th>Document Name</th>
+                {tableInput && <th>{tableInput?.label ?? field.label}</th>}
+
+
+            </tr>
+            </thead>
+            <tfoot>
+
+            </tfoot>
+            <tbody>
+            {fields.map((_field,index) => (
+                <tr key={_field.id}>
+                    <td>{files.item(index)?.name??''}</td>
+                    {tableInput && <td><Input field={tableInput} index={index} displayLabel={false} overrideFieldName={`${field.name}.${index}.${tableInput.name??''}`} overrideErrorMessageName={`${field.name}[${index}].${tableInput?.name??''}`} /></td>}
+                </tr>
+            ))}
+
+
+            </tbody>
+        </table>
+    );
+}
+
+
+function FileInput({field,index,overrideFieldName,overrideErrorMessageName,displayLabel=true, setUploadedDocumentIds}:{field:FieldDef,index: number, displayLabel: boolean, overrideFieldName?: string, overrideErrorMessageName?: string, setUploadedDocumentIds?: (input : {[fileName:string]:string})=> void }): React.JSX.Element{
     // const fieldController = useController({
     //     name:field.name,
     //     control,
@@ -260,22 +319,38 @@ function FileInput({field,index}:{field:FieldDef,index: number,}): React.JSX.Ele
     //
     //     </div>
     // );
-    const {formState,register,getValues} = useFormContext();
+    const {formState,register,getValues,trigger} = useFormContext();
     const [selectedFiles, setSelectedFiles] = useState<FileList|null>(null)
     useEffect(()=>{
         setSelectedFiles(getValues(field.name));
     },[])
-    function _onChange(event :React.ChangeEvent<HTMLInputElement>){
-        setSelectedFiles(event.target.files);
-    }
-    const formHookRegisterResult = register(field.name,{onChange:_onChange});
 
+    async function _onChange(event :React.ChangeEvent<HTMLInputElement>){
+        setSelectedFiles(event.target.files);
+        const isValid = await trigger(field.name);
+        if(isValid){
+            console.info('all validations passed - some code here will upload the file to the backend API');
+            const fileUploadsPromiseArray = Array.from(event.target.files??[])
+                .map(async file =>({file: file, uploadResult: await documentUpload(file)}));
+            const fileUploads = await Promise.all(fileUploadsPromiseArray);
+            const fileName2DocumentIdMap = fileUploads
+                .map(fileUpploadResult => ({fileName: fileUpploadResult.file.name, documentId: fileUpploadResult.uploadResult.documentId}))
+                .reduce((prev,curr)=>({...prev, [curr.fileName]: curr.documentId}), {} as {[fileName:string]:string});
+
+            console.info('fileName2DocumentIdMap',fileName2DocumentIdMap)
+            setUploadedDocumentIds && setUploadedDocumentIds(fileName2DocumentIdMap);
+
+        }
+    }
+    const formHookRegisterResult = register(overrideFieldName??field.name,{onChange:_onChange});
 
     return (
         <div className="field is-horizontal">
-            <div className="field-label is-normal">
-                <label className="label" htmlFor={field.name}>{field.label}</label>
-            </div>
+            {displayLabel && (
+                <div className="field-label is-normal">
+                    <label className="label is-capitalized" htmlFor={field.name}>{field.label}</label>
+                </div>
+            )}
             <div className="field-body">
                 <div className="field">
                     <div className="control">
@@ -301,7 +376,7 @@ function FileInput({field,index}:{field:FieldDef,index: number,}): React.JSX.Ele
 
                             </label>
                         </div>
-                        {formState.errors[field.name] &&  [formState.errors[field.name]].flat().map(error => error?.message).map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
+                        {formState.errors[overrideErrorMessageName??field.name] &&  [overrideErrorMessageName??formState.errors[field.name]].flat().map(error => error?.message).map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
 
 
                     </div>
@@ -314,47 +389,3 @@ function FileInput({field,index}:{field:FieldDef,index: number,}): React.JSX.Ele
 
 
 
-
-function transformPageDefToValidationSchema(pageDef: PageDef){
-    const yupObject = pageDef.fields.map(field => {
-        let value = (field.type==='file'? yup.mixed() : yup.string()).label(field.label);
-
-        value = field.validations.reduce((prev, curr)=>{
-            if(field.type === 'file'){
-                switch (curr.type){
-                    case "REQUIRED": return prev.test('required',curr.message ??'please select a file', (value:any) =>  value && (value as FileList).length>0);
-                    // case "MIN": return prev.test('fewFiles',curr.message?.replace('${VALIDATION-MIN-VALUE}',(curr.min??Number.MIN_VALUE)+"") ??'number of selected file is less than the required number', (value:any) =>  { console.info('file min',field.name,(value as FileList),(value as FileList).length); return value && (value as FileList).length>=(curr.min??Number.MIN_VALUE);});
-                    case "MAX": return prev.test('tooManyFiles',curr.message??'too many files selected', (value:any) =>  value && (value as FileList).length<=(curr.max??Number.MAX_VALUE));
-                    case "FILE-TYPE": return prev.test('fileType',curr.message??'the file type is not supported', (value?:any) => value &&(value as FileList)?.length<1 || value && Array.from(value as FileList).every(file => curr.supportedFileTypes.has(file.type) ));
-                    default: {
-                        // console.warn('provided validation type is not supported for File input:', curr.type)
-                        return prev;
-                    }
-                }
-            }else{
-                switch (curr.type){
-                    case "REQUIRED": return field.type==='select'? prev.test('required',curr.message??'please select a value', (value)=> {console.info('select validation',value); return value!=='placeholder';}) : prev.required(curr.message);
-                    case "MIN": return prev.min(curr.min??0,curr.message);
-                    case "MAX": return prev.min(curr.max??0,curr.message);
-                    case "PATTERN": return prev.matches(curr.pattern ?? /.*/, curr.message);
-                    default:{
-                        // console.warn('provided validation type is not supported for generic input:', curr.type)
-                        return prev;
-                    }
-                }
-            }
-
-        }, value as yup.StringSchema)
-        return {
-            key: field.name,
-            def: value
-        } ;
-    })
-        .reduce((prev,curr)=>{
-            prev[curr.key] = curr.def;
-            return prev;
-        },{} as {[fieldName: string] : yup.Schema});
-    const validationSchema = yup.object(yupObject)   ;
-
-    return validationSchema;
-}

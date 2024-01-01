@@ -1,4 +1,4 @@
-import React, {Profiler} from 'react'
+import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import {QueryClient, QueryClientProvider} from "react-query";
@@ -23,21 +23,21 @@ enableMocking().then(()=>{
 
     ReactDOM.createRoot(document.getElementById('root')!).render(
         <React.StrictMode>
-            <Profiler id='root'
-                      onRender={(id, phase, actualDuration, baseDuration, startTime, commitTime, interactions) => console.info({
-                          'root profiler':id,
-                          'phase':phase,
-                          'actualDuration':actualDuration,
-                          'baseDuration':baseDuration,
-                          'startTime':startTime,
-                          'commitTime':commitTime,
-                          'interactions':interactions
-                      })
-            }>
+            {/*<Profiler id='root'*/}
+            {/*          onRender={(id, phase, actualDuration, baseDuration, startTime, commitTime, interactions) => console.info({*/}
+            {/*              'root profiler':id,*/}
+            {/*              'phase':phase,*/}
+            {/*              'actualDuration':actualDuration,*/}
+            {/*              'baseDuration':baseDuration,*/}
+            {/*              'startTime':startTime,*/}
+            {/*              'commitTime':commitTime,*/}
+            {/*              'interactions':interactions*/}
+            {/*          })*/}
+            {/*}>*/}
                 <QueryClientProvider client={queryClient}>
                     <App/>
                 </QueryClientProvider>
-            </Profiler>
+            {/*</Profiler>*/}
         </React.StrictMode>,
     )
 

@@ -39,6 +39,7 @@ const newUserFormDef={
                     name:'gender',
                     label: 'Gender',
                     type: 'select',
+                    placeHolder: 'please Select Gender',
                     selectOptions:[
                         {
                             code:'male',
@@ -64,8 +65,8 @@ const newUserFormDef={
             fields:[
 
                 {
-                    name:'profilePicture',
-                    label: 'Profile Picture',
+                    name:'accountDocuments',
+                    label: 'account documents',
                     type: 'file',
                     validations:[
                         {
@@ -138,6 +139,48 @@ const newUserFormDef={
                         }
                     ]
                 },
+            ] as Array<FieldDef>
+        },
+        {
+            id:'Document Types',
+            header: 'Documents Types',
+            fields:[
+
+                {
+                    name:'accountDocumentsTypes',
+                    label: 'Document Types',
+                    type: 'file-table-input',
+                    sourceFilesInputName:'accountDocuments',
+                    validations:[],
+                    fileTableInput: {
+                        name:'documentType',
+                        label: 'Document Type',
+                        type: 'select',
+                        placeHolder: 'please select document type',
+                        selectOptions:[
+                            {
+                                code:'driver-license',
+                                text:'driver license'
+                            },
+                            {
+                                code:'id-card',
+                                text:'ID Card'
+                            },
+                            {
+                                code:'high-school-diploma',
+                                text:'high school diploma'
+                            }
+                        ],
+                        validations:[
+                            {
+                                type: 'REQUIRED'
+                            }
+                        ]
+
+                    }
+
+                },
+
             ] as Array<FieldDef>
         }
     ]
