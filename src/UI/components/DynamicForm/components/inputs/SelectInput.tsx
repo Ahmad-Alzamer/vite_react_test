@@ -67,7 +67,9 @@ export function SelectInput({field, index, overrideFieldName, overrideErrorMessa
                         </div>
                         {formState.errors[overrideErrorMessageName ?? field.name] && [formState.errors[overrideErrorMessageName ?? field.name]].flat().map(error => error?.message).map(message =>
                             <p className="help is-danger"
-                               key={'error-message-' + field.name + "-" + message}>{message}</p>)}
+                               key={'error-message-' + field.name + "-" + message}>{message}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
