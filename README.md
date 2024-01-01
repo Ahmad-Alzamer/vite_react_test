@@ -27,3 +27,36 @@ stop the docker image
 ```shell
 docker stop web
 ```
+
+
+# React-Hook-Form
+for form state management
+https://react-hook-form.com/
+
+# yup
+for validations:
+https://www.npmjs.com/package/yup
+
+# React-Query
+react-query for caching results from REST API calls
+https://tanstack.com/query/v3/docs/react/overview
+
+# Axios
+making calls to the backend
+https://www.npmjs.com/package/axios
+
+# vite
+JS bundler
+https://vitejs.dev/guide/
+
+# Cypress 
+for browser-based integration/e2e testing (somewhat similar to selenium)
+https://www.cypress.io/
+
+# Bulma
+minimal css framework without any JS
+https://bulma.io/documentation/
+
+# React-Router
+browser routing
+https://reactrouter.com/en/main
