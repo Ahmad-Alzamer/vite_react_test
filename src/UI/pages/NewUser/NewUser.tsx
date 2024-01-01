@@ -149,7 +149,7 @@ const newUserFormDef={
                 {
                     name:'accountDocumentsTypes',
                     label: 'Document Types',
-                    type: 'file-table-input',
+                    type: 'file-table-inputs',
                     sourceFilesInputName:'accountDocuments',
                     validations:[],
                     fileTableInput: {
@@ -334,7 +334,7 @@ export function NewUser(){
 //                         return value && (value as FileList).length<=(curr.max??Number.MAX_VALUE);});
 //                     case "FILE-TYPE": return prev.test('fileType',curr.message??'the file type is not supported', (value?:any) => {console.info('file type',field.name,(value as FileList),(value as FileList).length);  return  (value as FileList)?.length<1 || Array.from(value as FileList).every(file => curr.supportedFileTypes.has(file.type) );});
 //                     default: {
-//                         console.warn('provided validation type is not supported for File input:', curr.type)
+//                         console.warn('provided validation type is not supported for File inputs:', curr.type)
 //                         return prev;
 //                     }
 //                 }
@@ -345,7 +345,7 @@ export function NewUser(){
 //                     case "MAX": return prev.min(curr.max??0,curr.message);
 //                     case "PATTERN": return prev.matches(curr.pattern ?? /.*/, curr.message);
 //                     default:{
-//                         console.warn('provided validation type is not supported for generic input:', curr.type)
+//                         console.warn('provided validation type is not supported for generic inputs:', curr.type)
 //                         return prev;
 //                     }
 //                 }
@@ -377,7 +377,7 @@ export function NewUser(){
 //         console.log('handling form submission',data)
 //     }
 //
-//     // console.log('NewUser','formState',formState,watch('profilePicture')) // watch input value by passing the name of it
+//     // console.log('NewUser','formState',formState,watch('profilePicture')) // watch inputs value by passing the name of it
 //
 //     const renderedFields = formDef.fields.map((field,index)=>{
 //         if(field.type === 'select'){
@@ -420,7 +420,7 @@ export function NewUser(){
 //             <div className="field-body">
 //                 <div className="field">
 //                     <div className="control">
-//                         <input {...register(field.name,) } className={`input ${formState.errors.firstName?'is-danger':''}`} type={field.type} id={field.name+"-"+index}  autoComplete={field.name} />
+//                         <inputs {...register(field.name,) } className={`inputs ${formState.errors.firstName?'is-danger':''}`} type={field.type} id={field.name+"-"+index}  autoComplete={field.name} />
 //                         {formState.errors[field.name] &&  [formState.errors[field.name]?.message].flat().map(message => <p className="help is-danger" key={'error-message-'+field.name+"-"+message}>{message }</p>)}
 //                     </div>
 //                 </div>
@@ -464,7 +464,7 @@ export function NewUser(){
 //                 <div className="control">
 //                     <div className="file has-name">
 //                         <label className="file-label">
-//                             <input  type="file"  {...register(field.name) } className={`file-input  ${formState.errors.firstName?'is-danger':''}`} id={field.name+"-"+index} />
+//                             <inputs  type="file"  {...register(field.name) } className={`file-inputs  ${formState.errors.firstName?'is-danger':''}`} id={field.name+"-"+index} />
 //                             <span className="file-cta">
 //                               <span className="file-icon">
 //                                   <FontAwesomeIcon icon={faUpload} />

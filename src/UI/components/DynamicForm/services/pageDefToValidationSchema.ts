@@ -1,4 +1,4 @@
-import {FieldDef} from "../UI/components/DynamicForm/types.ts";
+import {FieldDef} from "../types.ts";
 import * as yup from "yup";
 
 function getFileInputDef(field: FieldDef){
@@ -11,7 +11,7 @@ function getFileInputDef(field: FieldDef){
             case "MAX": return prev.test('tooManyFiles',curr.message??'too many files selected', (value:any) =>  value && (value as FileList).length<=(curr.max??Number.MAX_VALUE));
             case "FILE-TYPE": return prev.test('fileType',curr.message??'the file type is not supported', (value?:any) => value &&(value as FileList)?.length<1 || value && Array.from(value as FileList).every(file => curr.supportedFileTypes?.has(file.type) ));
             default: {
-                // console.warn('provided validation type is not supported for File input:', curr.type)
+                // console.warn('provided validation type is not supported for File inputs:', curr.type)
                 return prev;
             }
         }
@@ -41,7 +41,7 @@ function getGenericInputDef(field: FieldDef){
             case "MAX": return prev.min(curr.max??0,curr.message);
             case "PATTERN": return prev.matches(curr.pattern ?? /.*/, curr.message);
             default:{
-                // console.warn('provided validation type is not supported for generic input:', curr.type)
+                // console.warn('provided validation type is not supported for generic inputs:', curr.type)
                 return prev;
             }
         }
@@ -60,7 +60,7 @@ export function transformPageDefToValidationSchema(fields: Array<FieldDef>):yup.
     const yupObject = fields.map(field => {
         if(field.type === 'file'){
             return getFileInputDef(field);
-        }if(field.type === 'file-table-input'){
+        }if(field.type === 'file-table-inputs'){
             return getFileTableInputDef(field);
 
         }else{

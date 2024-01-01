@@ -1,10 +1,10 @@
 import axios from "axios";
-import {FormDef} from "../UI/components/DynamicForm/types.ts";
+import {FormDef} from "../types.ts";
 
 function preprocessFormData(formData: any,formDef: FormDef,uploadedDocumentIds:{[fileName:string]:string}){
 
     const fileTableInputs = formDef.pages.flatMap(page => page.fields)
-        .filter(field => field.type === 'file-table-input')
+        .filter(field => field.type === 'file-table-inputs')
         .map(field => ({name: field.name, fileTableInput: field.fileTableInput, value: (formData[field.name] as Array<{file:File, [tableInputName:string]:string|File}>) }))
         .map(field => (
             {
@@ -21,7 +21,7 @@ function preprocessFormData(formData: any,formDef: FormDef,uploadedDocumentIds:{
         .reduce((prev,curr)=>({...prev, [curr.name]:curr.value}), {} as {[fieldName:string]:any})
     const restOfFields= formDef.pages.flatMap(page => page.fields)
         .filter(field => field.type !== 'file' )
-        .filter(field => field.type !== 'file-table-input')
+        .filter(field => field.type !== 'file-table-inputs')
         .map(field => ({name: field.name, value: formData[field.name]}))
         .reduce((prev,curr)=>({...prev, [curr.name]:curr.value}), {} as {[fieldName:string]:string})
 

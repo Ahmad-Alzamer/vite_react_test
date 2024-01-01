@@ -1,4 +1,4 @@
-import {FormDef} from "../UI/components/DynamicForm/types.ts";
+import {FormDef} from "../types.ts";
 import {useState} from "react";
 
 export interface UseFormNavigationResult {

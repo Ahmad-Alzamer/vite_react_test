@@ -3,7 +3,7 @@ export type FormValidations = 'REQUIRED' | 'MIN' | 'MAX' | 'PATTERN' | 'FILE-TYP
 export interface FieldDef{
     name: string,
     label: string,
-    type : 'text' | 'select' | 'file' | 'file-table-input',
+    type : 'text' | 'select' | 'file' | 'file-table-inputs',
     placeHolder?: string,
     selectOptions? : Array<{code: string, text: string}>,
     sourceFilesInputName?: string,
