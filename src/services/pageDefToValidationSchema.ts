@@ -56,7 +56,7 @@ function getGenericInputDef(field: FieldDef){
 
 }
 
-export function transformPageDefToValidationSchema(fields: Array<FieldDef>):yup.ObjectSchema{
+export function transformPageDefToValidationSchema(fields: Array<FieldDef>):yup.ObjectSchema<any,any,any,any>{
     const yupObject = fields.map(field => {
         if(field.type === 'file'){
             return getFileInputDef(field);

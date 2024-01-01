@@ -12,6 +12,7 @@ import {submitForm} from "../../../services/submitForm.ts";
 
 export function DynamicForm({formDef}:{formDef: FormDef}) : React.JSX.Element{
     const [uploadedDocumentIds, setUploadedDocumentIds] = useState<{[fileName:string]:string}>({});
+    const [showProgressBar, setShowProgressBar] = useState<boolean>(false);
     const formNavigation = useFormNavigation(formDef);
 
     const currentPageDef =  formDef.pages
@@ -32,12 +33,19 @@ export function DynamicForm({formDef}:{formDef: FormDef}) : React.JSX.Element{
     }
 
     const onFormSubmit: SubmitHandler<any> =async  (data) => {
-        console.log('handling last page submission for form:',formDef.id.name,'form data',data);
-        const result = await submitForm(data,formDef,uploadedDocumentIds);
-        console.info('form submission result',result)
-        // useFormMethods.reset()
-        // formNavigation.firstPage();
-        // setUploadedDocumentIds({});
+        setShowProgressBar(true);
+        try{
+            console.log('handling last page submission for form:',formDef.id.name,'form data',data);
+            const result = await submitForm(data,formDef,uploadedDocumentIds);
+            console.info('form submission result',result)
+            useFormMethods.reset()
+            formNavigation.firstPage();
+            setUploadedDocumentIds({});
+
+        }catch (e){
+            console.error('failed to submit form',e)
+        }
+        setShowProgressBar(false);
     }
 
 
@@ -55,6 +63,13 @@ export function DynamicForm({formDef}:{formDef: FormDef}) : React.JSX.Element{
     return (
         <section id={formDef.id.name}>
             <FormProvider {...useFormMethods} >
+                <div className={`modal ${showProgressBar?'is-active':''}`}>
+                    <div className="modal-background"></div>
+                    <div className="modal-content">
+                        <progress className="progress is-small is-info" max="100" ></progress>;
+                    </div>
+                    <button className="modal-close is-large" aria-label="close"></button>
+                </div>
                 <form >
                     <div className='is-flex is-justify-content-center'><span className='is-capitalized'>{formDef.header}</span></div>
                     <hr/>
@@ -235,15 +250,21 @@ function FileTableInput({field,}:{field:FieldDef,index: number, displayLabel: bo
     const tableInput = field.fileTableInput;
 
 
-    const { watch} = useFormContext();
+    const { watch,getValues} = useFormContext();
     const { fields,replace } = useFieldArray({
-        name: tableInput?.name?? field.name, // unique name for your Field Array
+        name:  field.name,
 
     });
     const files = watch(field.sourceFilesInputName??'') as FileList;
+
     useEffect(()=>{
-        // replace(Array.from(files).map(file => ({})));
-        replace(new Array(files.length).fill({}));
+        const previousValue =getValues('accountDocumentsTypes');
+        console.info('inside file table input', previousValue)
+        if(!previousValue || (previousValue as Array<any>).length===0){
+            replace(Array.from(files).map(file => ({file: file})));
+        }
+
+        // replace(new Array(files.length).fill({test:23}));
 
     },[files]);
     return (
