@@ -8,6 +8,8 @@ import ErrorPage from "./UI/pages/error/Error.tsx";
 import {Users} from "./UI/pages/users/Users.tsx";
 import Layout from "./UI/pages/Layout.tsx";
 import {NewUser} from "./UI/pages/NewUser/NewUser.tsx";
+import {TestSuspense} from "./UI/pages/TestSuspense/TestSuspense.tsx";
+import {ZodValidation} from "./UI/pages/zodValidation/ZodValidation.tsx";
 
 
 
@@ -24,6 +26,13 @@ const router = createBrowserRouter([
             {
                 path: "NewUser",
                 element: <NewUser />,
+            },
+            {
+                path: "TestSuspense",
+                element: <TestSuspense />,
+            },{
+                path: "ZodValidation",
+                element: <ZodValidation />,
             },
         ]
     },

@@ -18,7 +18,7 @@ function Layout({children}:{children?:JSX.Element|JSX.Element[]}) {
                     title={'Test Vite + React + TypeScript'}
                     subTitle={'scss + cypress'}
                     themeColor='is-info'
-                    tabs={['Users','NewUser']}
+                    tabs={['Users','NewUser','TestSuspense','ZodValidation']}
                 />
                 <main className='container is-fluid mt-4'>
                     {children?? <Outlet />}
